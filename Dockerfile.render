@@ -2,9 +2,11 @@
 FROM registry.heroiclabs.com/heroiclabs/nakama-pluginbuilder:3.22.0 AS builder
 
 WORKDIR /module
-COPY nakama-module/go.mod nakama-module/go.sum ./
-RUN go mod download
+COPY nakama-module/go.mod ./
 COPY nakama-module/main.go ./
+
+# Regenerate go.sum to match this exact Go toolchain
+RUN go mod tidy
 RUN CGO_ENABLED=1 go build -buildmode=plugin -o tictactoe.so main.go
 
 # Stage 2: Nakama server with the plugin
