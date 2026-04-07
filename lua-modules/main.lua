@@ -2,13 +2,18 @@ local nk = require("nakama")
 
 -- Register RPC functions
 nk.register_rpc(function(context, payload)
-    nk.logger_debug("listGames called")
+    nk.logger_info("listGames called")
     return nk.json_encode({ success = true, rooms = {} })
 end, "list_games")
 
 nk.register_rpc(function(context, payload)
-    local data = nk.json_decode(payload)
-    local mode = data.mode or "classic"
+    local mode = "classic"
+    if payload and payload ~= "" then
+        local data = nk.json_decode(payload)
+        if data and data.mode then
+            mode = data.mode
+        end
+    end
 
     local match_id = nk.match_create("lua_authoritative", { mode = mode })
     if match_id then
@@ -20,9 +25,13 @@ nk.register_rpc(function(context, payload)
 end, "create_game")
 
 nk.register_rpc(function(context, payload)
-    local data = nk.json_decode(payload)
+    if not payload or payload == "" then
+        return nk.json_encode({ success = false, error = "Payload required" })
+    end
 
+    local data = nk.json_decode(payload)
     local match_id = ""
+
     if type(data.matchId) == "string" then
         match_id = data.matchId
     elseif type(data.matchId) == "table" and data.matchId.matchId then
@@ -55,7 +64,7 @@ nk.register_rpc(function(context, payload)
             })
         end
     else
-        nk.logger_debug("Leaderboard not configured or empty")
+        nk.logger_info("Leaderboard not configured or empty")
     end
 
     return nk.json_encode({ success = true, leaderboard = leaderboard })
