@@ -1,0 +1,30 @@
+name: "tictactoe"
+runtime:
+  path: "/nakama/data/modules"
+  env:
+    - "GOTRACEBACK=all"
+session:
+  token_expiry_sec: 86400
+socket:
+  port: 7350
+  max_message_size_bytes: 8192
+  read_buffer_size_bytes: 4096
+  write_buffer_size_bytes: 4096
+  ping_period_ms: 15000
+  pong_wait_ms: 30000
+logger:
+  level: "DEBUG"
+  file: ""
+metrics:
+  reporting_freq_sec: 60
+database:
+  address: "postgres:localdb@postgres:5432/nakama"
+  conn_max_lifetime_ms: 0
+  max_open_conns: 0
+  max_idle_conns: 100
+social:
+  steam:
+    published_interface_version: 1
+runtime:
+  http_key: "defaulthttpkey"
+  encryption_key: ""
