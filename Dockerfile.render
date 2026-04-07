@@ -1,5 +1,5 @@
 # Stage 1: Build Go plugin
-FROM golang:1.22.4-bullseye AS builder
+FROM golang:1.21-bullseye AS builder
 
 WORKDIR /module
 COPY nakama-module/go.mod nakama-module/go.sum ./
