@@ -411,8 +411,12 @@ local function cleanup_games(context, payload)
             should_delete = true
         end
 
-        -- Delete if only creator exists and no opponent joined (abandoned)
-        -- Check: has x_id but no o_id, and is older than 5 minutes
+        -- Delete if creator left before opponent joined (abandoned, instant cleanup)
+        if not should_delete and state.abandoned then
+            should_delete = true
+        end
+
+        -- Delete if only creator exists and no opponent joined (old rule, fallback)
         if not should_delete and state.players and
            state.players.x_id and state.players.x_id ~= "" and
            (not state.players.o_id or state.players.o_id == "") then
@@ -516,23 +520,23 @@ end
 local function get_leaderboard(context, payload)
     -- Get all player stats from storage
     local all_stats = nk.storage_list(nil, "player_stats", 1000)
-    
+
     -- Get all usernames from our custom storage
     local all_usernames = nk.storage_list(nil, "usernames", 1000)
     local username_map = {}
     for _, obj in ipairs(all_usernames) do
         username_map[obj.key] = obj.value.username or obj.key:sub(1, 8)
     end
-    
+
     local leaderboard = {}
-    
+
     for _, obj in ipairs(all_stats) do
         local player_id = obj.key
         local stats = obj.value
-        
+
         -- Get username from our storage, fallback to ID
         local username = username_map[player_id] or player_id:sub(1, 8)
-        
+
         table.insert(leaderboard, {
             userId = player_id,
             username = username,
@@ -543,17 +547,17 @@ local function get_leaderboard(context, payload)
             score = stats.score or 0
         })
     end
-    
+
     -- Sort by score (descending)
     table.sort(leaderboard, function(a, b)
         return a.score > b.score
     end)
-    
+
     -- Add rank
     for i, entry in ipairs(leaderboard) do
         entry.rank = i
     end
-    
+
     return nk.json_encode({ success = true, leaderboard = leaderboard })
 end
 
@@ -649,8 +653,8 @@ local function find_match(context, payload)
         nk.storage_write(status_writes)
 
         nk.logger_info("Match found: " .. user_id .. " vs " .. matched_opponent_id .. " in room " .. match_id)
-        return nk.json_encode({ 
-            success = true, 
+        return nk.json_encode({
+            success = true,
             matched = true,
             matchId = match_id,
             role = "X",
@@ -680,8 +684,8 @@ local function find_match(context, payload)
         nk.storage_write(writes)
 
         nk.logger_info("Player " .. user_id .. " added to matchmaking queue")
-        return nk.json_encode({ 
-            success = true, 
+        return nk.json_encode({
+            success = true,
             matched = false,
             status = "waiting"
         })
@@ -698,8 +702,8 @@ local function check_match_status(context, payload)
 
     if results and #results > 0 then
         local status_data = results[1].value
-        return nk.json_encode({ 
-            success = true, 
+        return nk.json_encode({
+            success = true,
             status = status_data.status,
             matchId = status_data.matchId or nil,
             role = status_data.role or nil,
@@ -720,14 +724,14 @@ local function store_username(context, payload)
     if not ok then
         return nk.json_encode({ success = false, error = "Invalid request" })
     end
-    
+
     local username = data.username
     local user_id = data.userId or context.user_id
-    
+
     if not username or username == "" then
         return nk.json_encode({ success = false, error = "Username required" })
     end
-    
+
     -- Store in a dedicated collection
     local writes = {
         {
@@ -738,10 +742,10 @@ local function store_username(context, payload)
             permission_write = 1
         }
     }
-    
+
     nk.storage_write(writes)
     nk.logger_info("Stored username: " .. username .. " for user: " .. user_id)
-    
+
     return nk.json_encode({ success = true, username = username })
 end
 
@@ -751,14 +755,14 @@ local function update_username(context, payload)
     if not ok then
         return nk.json_encode({ success = false, error = "Invalid request" })
     end
-    
+
     local new_username = data.username
     if not new_username or new_username == "" then
         return nk.json_encode({ success = false, error = "Username required" })
     end
-    
+
     local user_id = context.user_id
-    
+
     -- Store the username in our custom collection
     local writes = {
         {
@@ -769,10 +773,93 @@ local function update_username(context, payload)
             permission_write = 1
         }
     }
-    
+
     nk.storage_write(writes)
     nk.logger_info("Updated username for user " .. user_id .. " to: " .. new_username)
     return nk.json_encode({ success = true, username = new_username })
+end
+
+-- leave_game - Player explicitly leaves a game
+local function leave_game(context, payload)
+    local ok, data = pcall(nk.json_decode, payload or "{}")
+    local match_id = data.matchId
+    local user_id = context.user_id
+
+    if not match_id then
+        return nk.json_encode({ success = false, error = "Match ID required" })
+    end
+
+    local reads = { { collection = "games", key = match_id } }
+    local results = nk.storage_read(reads)
+
+    if not results or #results == 0 then
+        return nk.json_encode({ success = false, error = "Game not found" })
+    end
+
+    local state = results[1].value
+
+    -- Game already over?
+    if state.winner then
+        return nk.json_encode({ success = true, alreadyOver = true, winner = state.winner })
+    end
+
+    -- Identify which player is leaving
+    local leaving_player = nil
+    local staying_player = nil
+    if user_id == state.players.x_id then
+        leaving_player = "X"
+        staying_player = "O"
+    elseif user_id == state.players.o_id then
+        leaving_player = "O"
+        staying_player = "X"
+    else
+        return nk.json_encode({ success = false, error = "Not a player in this match" })
+    end
+
+    -- If only one player has joined (creator waiting), just mark them as left
+    if staying_player == "O" and (not state.players.o_id or state.players.o_id == "") then
+        -- Creator leaving before anyone joined — mark for immediate cleanup
+        state.players.x_id = ""
+        state.players.x_username = ""
+        state.abandoned = true
+        state.leftAt = os.time()
+
+        local writes = {
+            {
+                collection = "games",
+                key = match_id,
+                value = state,
+                permission_read = 2,
+                permission_write = 1
+            }
+        }
+        nk.storage_write(writes)
+        nk.logger_info("Creator left before opponent joined, game marked abandoned: " .. match_id)
+        return nk.json_encode({ success = true, abandoned = true })
+    end
+
+    -- Both players were in the game — staying player wins by forfeit
+    state.winner = staying_player
+    state.abandoned = true
+    state.leftAt = os.time()
+    state.leftBy = leaving_player
+
+    -- Update stats: staying player gets win (3 pts), leaving player gets loss
+    update_player_stats(state, staying_player)
+
+    local writes = {
+        {
+            collection = "games",
+            key = match_id,
+            value = state,
+            permission_read = 2,
+            permission_write = 1
+        }
+    }
+    nk.storage_write(writes)
+
+    nk.logger_info("Player " .. leaving_player .. " left. Player " .. staying_player .. " wins by forfeit: " .. match_id)
+    return nk.json_encode({ success = true, winner = staying_player, forfeit = true })
 end
 
 nk.register_rpc(create_game, "create_game")
@@ -787,5 +874,6 @@ nk.register_rpc(find_match, "find_match")
 nk.register_rpc(check_match_status, "check_match_status")
 nk.register_rpc(store_username, "store_username")
 nk.register_rpc(update_username, "update_username")
+nk.register_rpc(leave_game, "leave_game")
 
 nk.logger_info("TicTacToe Lua RPC Server initialized")
