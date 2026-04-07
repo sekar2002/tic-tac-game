@@ -38,9 +38,18 @@ export class NakamaService {
   public gameState: any = null;
   private matchmakerTicket: string | null = null;
   private serverKey = 'defaulthttpkey';
-  private host = '';  // Use relative URL through proxy
+  private host = '';
   private port = '';
   private useSSL = false;
+  private backendUrl = '';
+
+  constructor() {
+    const hostname = window.location.hostname;
+    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+      this.backendUrl = (window as any).__NAKAMA_URL__ || '';
+      this.useSSL = window.location.protocol === 'https:';
+    }
+  }
 
   // Event emitters for real-time updates
   onGameStateUpdate = new EventEmitter<GameState>();
@@ -67,7 +76,7 @@ export class NakamaService {
       // This ensures the same username always maps to the same account
       const deviceId = `device_${username.toLowerCase().trim()}`;
 
-      const apiUrl = '/v2/account/authenticate/device?create=true';
+      const apiUrl = `${this.backendUrl}/v2/account/authenticate/device?create=true`;
 
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -339,7 +348,7 @@ export class NakamaService {
 
   private async rpcCall(id: string, payload: any): Promise<any> {
     // Don't use http_key for user-authenticated RPCs - use Bearer token only
-    const apiUrl = `/v2/rpc/${id}`;
+    const apiUrl = `${this.backendUrl}/v2/rpc/${id}`;
     // Nakama RPC handlers expect double-encoded JSON:
     // - Inner encoding: {matchId: "abc"} -> '{"matchId":"abc"}'
     // - Outer encoding: wraps it again for HTTP transport
@@ -447,9 +456,13 @@ export class NakamaService {
   }
 
   private getWebSocketUrl(): string {
-    const protocol = this.useSSL ? 'wss' : 'ws';
     const token = this.session.token;
-    return `${protocol}://localhost:7350/ws?lang=en&status=true&token=${token}`;
+    if (this.backendUrl) {
+      const url = new URL(this.backendUrl);
+      const protocol = url.protocol === 'https:' ? 'wss' : 'ws';
+      return `${protocol}://${url.host}/ws?lang=en&status=true&token=${token}`;
+    }
+    return `ws://localhost:7350/ws?lang=en&status=true&token=${token}`;
   }
 
   disconnect(): void {

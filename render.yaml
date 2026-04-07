@@ -1,0 +1,27 @@
+services:
+  # Nakama Backend (Docker Web Service)
+  - type: web
+    name: tictactoe-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile.render
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+    healthCheckPath: /healthcheck
+
+  # Angular Frontend (Static Site)
+  - type: web
+    name: tictactoe-frontend
+    runtime: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist/tictactoe-frontend
+    plan: free
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=3600
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
