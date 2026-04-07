@@ -1,18 +1,8 @@
-# Stage 1: Build plugin using official Nakama plugin builder (guaranteed version match)
-FROM registry.heroiclabs.com/heroiclabs/nakama-pluginbuilder:3.22.0 AS builder
-
-WORKDIR /module
-COPY nakama-module/go.mod ./
-COPY nakama-module/main.go ./
-
-# Regenerate go.sum to match this exact Go toolchain
-RUN go mod tidy
-RUN CGO_ENABLED=1 go build -buildmode=plugin -o tictactoe.so main.go
-
-# Stage 2: Nakama server with the plugin
+# No build stage needed - Lua files are loaded directly by Nakama
 FROM registry.heroiclabs.com/heroiclabs/nakama:3.22.0
 
-COPY --from=builder /module/tictactoe.so /nakama/data/modules/tictactoe.so
+# Copy Lua module (no compilation required)
+COPY lua-modules/main.lua /nakama/data/modules/main.lua
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
