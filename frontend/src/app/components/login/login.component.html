@@ -1,0 +1,71 @@
+<div class="login-page">
+    <!-- Floating background elements -->
+    <div class="floating-symbols">
+        <span class="symbol x" style="top: 10%; left: 5%; animation-delay: 0s;">X</span>
+        <span class="symbol o" style="top: 25%; left: 85%; animation-delay: 1.5s;">O</span>
+        <span class="symbol x" style="top: 60%; left: 10%; animation-delay: 3s;">X</span>
+        <span class="symbol o" style="top: 75%; left: 90%; animation-delay: 0.8s;">O</span>
+        <span class="symbol x" style="top: 45%; left: 92%; animation-delay: 2.2s;">X</span>
+        <span class="symbol o" style="top: 85%; left: 50%; animation-delay: 4s;">O</span>
+        <span class="symbol x" style="top: 5%; left: 50%; animation-delay: 1s;">X</span>
+        <span class="symbol o" style="top: 40%; left: 3%; animation-delay: 2.8s;">O</span>
+    </div>
+
+    <div class="login-card">
+        <!-- Animated game icon -->
+        <div class="game-icon">
+            <div class="mini-board">
+                <span class="cell-x">X</span>
+                <span class="cell-o">O</span>
+                <span class="cell-x">X</span>
+                <span class="cell-o">O</span>
+                <span class="cell-x">X</span>
+                <span class="cell-o">O</span>
+                <span class="cell-o">O</span>
+                <span class="cell-x">X</span>
+                <span class="cell-o">O</span>
+            </div>
+        </div>
+
+        <h1 class="game-title">
+            <span class="title-letter" style="animation-delay: 0.05s">T</span><span class="title-letter" style="animation-delay: 0.1s">i</span><span class="title-letter" style="animation-delay: 0.15s">c</span>
+            <span class="title-letter" style="animation-delay: 0.25s">T</span><span class="title-letter" style="animation-delay: 0.3s">a</span><span class="title-letter" style="animation-delay: 0.35s">c</span>
+            <span class="title-letter" style="animation-delay: 0.45s">T</span><span class="title-letter" style="animation-delay: 0.5s">o</span><span class="title-letter" style="animation-delay: 0.55s">e</span>
+        </h1>
+        <p class="subtitle">Multiplayer Battle Arena</p>
+
+        <form (ngSubmit)="login()" class="login-form">
+            <div class="input-group">
+                <input
+                        type="text"
+                        [(ngModel)]="username"
+                        name="username"
+                        placeholder=" "
+                        class="login-input"
+                        required
+                        autocomplete="off"
+                >
+                <label class="input-label">Choose your name, warrior</label>
+                <div class="input-glow"></div>
+            </div>
+
+            <button
+                    type="submit"
+                    class="play-btn"
+                    [class.loading]="loading"
+                    [disabled]="loading"
+            >
+        <span class="btn-content" *ngIf="!loading">
+          <span class="btn-text">ENTER ARENA</span>
+          <span class="btn-arrow">&rarr;</span>
+        </span>
+                <span class="spinner" *ngIf="loading"></span>
+            </button>
+
+            <div *ngIf="error" class="error-msg">
+                <span class="error-icon">!</span>
+                {{ error }}
+            </div>
+        </form>
+    </div>
+</div>

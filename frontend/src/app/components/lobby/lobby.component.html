@@ -1,0 +1,317 @@
+<div class="lobby-page" [class.sidebar-open]="sidebarOpen">
+  <!-- Floating background symbols -->
+  <div class="floating-symbols">
+    <span class="symbol x" style="top:8%;left:3%;animation-delay:0s">X</span>
+    <span class="symbol o" style="top:20%;left:90%;animation-delay:1.5s">O</span>
+    <span class="symbol x" style="top:55%;left:6%;animation-delay:2.8s">X</span>
+    <span class="symbol o" style="top:80%;left:92%;animation-delay:0.8s">O</span>
+    <span class="symbol x" style="top:70%;left:50%;animation-delay:2s">X</span>
+    <span class="symbol o" style="top:5%;left:55%;animation-delay:1s">O</span>
+  </div>
+
+  <!-- Top bar -->
+  <header class="top-bar">
+    <div class="logo">
+      <span class="logo-x">X</span><span class="logo-o">O</span>
+      <span class="logo-text">Tic Tac Toe</span>
+    </div>
+    <div class="top-right">
+      <button class="icon-btn trophy-btn" (click)="toggleLeaderboard()" title="Leaderboard">
+        <svg class="lb-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+          <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+          <path d="M4 22h16"/>
+          <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20 7 22"/>
+          <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20 17 22"/>
+          <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+        </svg>
+      </button>
+      <div class="user-info">
+        <div class="avatar">{{ userInitial }}</div>
+        <span class="user-name">{{ username }}</span>
+        <button class="logout-btn" (click)="logout()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main content: full width center -->
+  <main class="lobby-content">
+    <section class="panel main-panel">
+      <div class="panel-header">
+        <h2 class="panel-title">
+          <svg class="title-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polygon points="10 8 16 12 10 16 10 8"/>
+          </svg>
+          Game Arena
+        </h2>
+      </div>
+
+      <!-- Status messages -->
+      <div *ngIf="success && !searchingForMatch" class="status-msg success">
+        {{ success }}
+      </div>
+      <div *ngIf="error" class="status-msg error">
+        {{ error }}
+      </div>
+
+      <!-- Game mode -->
+      <div class="section">
+        <label class="section-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/>
+          </svg>
+          Game Mode
+        </label>
+        <div class="mode-selector">
+          <button
+            class="mode-btn"
+            [class.active]="selectedMode === 'classic'"
+            (click)="selectedMode = 'classic'">
+            <span class="mode-icon">&#9813;</span>
+            <span class="mode-label">Classic</span>
+            <span class="mode-desc">No time limit</span>
+          </button>
+          <button
+            class="mode-btn timed"
+            [class.active]="selectedMode === 'timed'"
+            (click)="selectedMode = 'timed'">
+            <span class="mode-icon">&#9201;</span>
+            <span class="mode-label">Timed</span>
+            <span class="mode-desc">30s per turn</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="action-buttons">
+        <button class="action-btn find" (click)="findMatch()" [disabled]="loading">
+          <svg class="action-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          Find Match
+        </button>
+        <button class="action-btn create" (click)="createGame()" [disabled]="loading">
+          <svg class="action-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Create Room (Player 1)
+        </button>
+        <button class="action-btn discover" (click)="loadRooms()" [disabled]="loading">
+          <svg class="action-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+          Discover Rooms
+        </button>
+      </div>
+
+      <!-- Join room -->
+      <div class="section join-section">
+        <label class="section-label join-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+            <polyline points="10 17 15 12 10 7"/>
+            <line x1="15" y1="12" x2="3" y2="12"/>
+          </svg>
+          Join Room (Player 2) - Paste Room ID from Player 1
+        </label>
+        <div class="join-row">
+          <input
+            type="text"
+            class="join-input"
+            placeholder="Paste Room ID here (e.g., abc12345_1234567890)"
+            [(ngModel)]="joinRoomId"
+            [disabled]="loading"
+            (keyup.enter)="joinRoomById()"
+          />
+          <button class="join-btn" (click)="joinRoomById()" [disabled]="loading || !joinRoomId">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+            </svg>
+            Join as Player 2
+          </button>
+        </div>
+        <p class="join-hint" *ngIf="joinRoomId">
+          Will join room: <code class="room-code">{{ joinRoomId }}</code>
+        </p>
+      </div>
+
+      <!-- Available rooms -->
+      <div class="section" *ngIf="rooms.length > 0">
+        <label class="section-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+          </svg>
+          Available Rooms
+        </label>
+        <ul class="room-list">
+          <li *ngFor="let room of rooms" class="room-item">
+            <div class="room-info">
+              <span class="room-id">{{ room.id }}</span>
+              <span class="room-meta">
+                <span class="badge" [class.badge-classic]="room.mode === 'classic'" [class.badge-timed]="room.mode === 'timed'">
+                  {{ room.mode }}
+                </span>
+                <span class="player-count">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                  </svg>
+                  {{ room.players }}/2
+                </span>
+              </span>
+            </div>
+            <button
+              class="join-btn small"
+              (click)="joinRoom(room.id)"
+              [disabled]="loading || room.players >= room.maxSize">
+              {{ room.players >= 2 ? 'Full' : 'Join as Player 2' }}
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Empty state when no rooms -->
+      <div class="empty-state" *ngIf="rooms.length === 0">
+        <div class="empty-board">
+          <span></span><span></span><span></span>
+          <span></span><span class="empty-x">X</span><span></span>
+          <span></span><span></span><span class="empty-o">O</span>
+        </div>
+        <p class="empty-text">No active rooms. Create one or find a match!</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Search Match Popup Overlay -->
+  <div class="search-overlay" *ngIf="searchingForMatch" (click)="$event.stopPropagation()">
+    <div class="search-popup" [class.found]="searchState === 'found'" [class.not-found]="searchState === 'not-found'">
+
+      <!-- Searching state -->
+      <div class="search-content" *ngIf="searchState === 'searching'">
+        <div class="search-header">
+          <div class="search-icon-wrap">
+            <svg class="search-spinner" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </div>
+          <p class="search-title">Finding a Match</p>
+          <p class="search-subtitle">Looking for an opponent in <span class="mode-tag">{{ selectedMode | titlecase }}</span> mode</p>
+        </div>
+
+        <div class="timer-bar">
+          <div class="timer-bar-fill" [style.width.%]="(searchTimer / 30) * 100"></div>
+          <span class="timer-label">{{ searchTimer }}s</span>
+        </div>
+
+        <div class="search-avatars">
+          <div class="avatar-pill you">
+            <span class="avatar-letter">{{ username.charAt(0).toUpperCase() }}</span>
+            <span class="avatar-name">You</span>
+          </div>
+          <div class="vs-divider">vs</div>
+          <div class="avatar-pill opponent searching">
+            <span class="avatar-letter">?</span>
+            <span class="avatar-name">Waiting...</span>
+          </div>
+        </div>
+
+        <button class="search-cancel-btn" (click)="cancelSearch()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+          Cancel Search
+        </button>
+      </div>
+
+      <!-- Match found state -->
+      <div class="search-content found-content" *ngIf="searchState === 'found'">
+        <div class="found-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <p class="search-title found-title">Match Found!</p>
+        <p class="search-subtitle">Getting ready to play...</p>
+      </div>
+
+      <!-- No match found state -->
+      <div class="search-content notfound-content" *ngIf="searchState === 'not-found'">
+        <div class="notfound-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M16 16s-1.5-2-4-2-4 2-4 2"/>
+            <line x1="9" y1="9" x2="9.01" y2="9"/>
+            <line x1="15" y1="9" x2="15.01" y2="9"/>
+          </svg>
+        </div>
+        <p class="search-title notfound-title">No Opponent Found</p>
+        <p class="search-subtitle">No one is looking for a match right now</p>
+        <div class="notfound-actions">
+          <button class="search-retry-btn" (click)="retrySearch()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+            </svg>
+            Try Again
+          </button>
+          <button class="search-close-btn" (click)="cancelSearch()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar overlay -->
+  <div class="sidebar-overlay" *ngIf="sidebarOpen" (click)="sidebarOpen = false"></div>
+
+  <!-- Leaderboard sidebar -->
+  <aside class="sidebar" [class.open]="sidebarOpen">
+    <div class="sidebar-header">
+      <h2 class="sidebar-title">
+        <span class="sidebar-trophy-wrap">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+            <path d="M4 22h16"/>
+            <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20 7 22"/>
+            <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20 17 22"/>
+            <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+          </svg>
+        </span>
+        Leaderboard
+      </h2>
+      <button class="close-btn" (click)="sidebarOpen = false">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div *ngIf="leaderboardLoading" class="lb-loading">
+      <span class="spinner"></span>
+    </div>
+
+    <div *ngIf="!leaderboardLoading" class="lb-content">
+      <div *ngFor="let r of leaderboard" class="lb-row" [class.rank-gold]="r.rank===1" [class.rank-silver]="r.rank===2" [class.rank-bronze]="r.rank===3">
+        <span class="lb-rank">
+          <span *ngIf="r.rank===1" class="medal">🥇</span>
+          <span *ngIf="r.rank===2" class="medal">🥈</span>
+          <span *ngIf="r.rank===3" class="medal">🥉</span>
+          <span *ngIf="r.rank > 3" class="rank-num">{{ r.rank }}</span>
+        </span>
+        <div class="lb-player">
+          <div class="lb-avatar">{{ r.username.charAt(0).toUpperCase() }}</div>
+          <span class="lb-name">{{ r.username }}</span>
+        </div>
+        <span class="lb-score">{{ r.score }}</span>
+      </div>
+      <p *ngIf="leaderboard.length === 0" class="lb-empty">No records yet. Start playing!</p>
+    </div>
+  </aside>
+</div>

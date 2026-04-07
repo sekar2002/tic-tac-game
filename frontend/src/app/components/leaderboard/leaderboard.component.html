@@ -1,0 +1,48 @@
+<div class="container">
+  <div class="card">
+    <h1>🏆 Leaderboard</h1>
+
+    <div *ngIf="error" class="status draw">
+      {{ error }}
+    </div>
+
+    <div *ngIf="loading" class="text-center">
+      Loading...
+    </div>
+
+    <div *ngIf="!loading">
+      <table class="leaderboard-table" *ngIf="leaderboard.length > 0">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Player</th>
+            <th>Wins</th>
+            <th>Losses</th>
+            <th>Draws</th>
+            <th>Games</th>
+            <th>Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let record of leaderboard" [ngClass]="getRankClass(record.rank)">
+            <td>{{ record.rank }}</td>
+            <td>{{ record.username }}</td>
+            <td>{{ record.wins }}</td>
+            <td>{{ record.losses }}</td>
+            <td>{{ record.draws }}</td>
+            <td>{{ record.totalGames }}</td>
+            <td>{{ record.score }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div *ngIf="leaderboard.length === 0" class="text-center">
+        No records yet. Start playing!
+      </div>
+    </div>
+
+    <button class="btn btn-secondary btn-block mt-2" (click)="goBack()">
+      ← Back to Lobby
+    </button>
+  </div>
+</div>

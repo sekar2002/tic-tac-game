@@ -1,0 +1,87 @@
+<div class="search-overlay">
+  <div class="search-popup" [class.found]="!searching && !error" [class.not-found]="error">
+    
+    <!-- Searching State -->
+    <div class="search-content" *ngIf="searching">
+      <div class="search-header">
+        <div class="search-animation">
+          <div class="ring-container">
+            <div class="ring ring-1"></div>
+            <div class="ring ring-2"></div>
+            <div class="ring ring-3"></div>
+            <div class="search-icon-wrap">
+              <svg class="search-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="orbit-container">
+            <div class="orbit">
+              <div class="orbit-dot x">X</div>
+            </div>
+            <div class="orbit orbit-2">
+              <div class="orbit-dot o">O</div>
+            </div>
+          </div>
+        </div>
+        <h2 class="search-title">Finding Opponent</h2>
+        <p class="search-subtitle">Searching for a worthy player...</p>
+        <div class="mode-tag">{{ selectedMode === 'classic' ? 'CLASSIC MODE' : 'TIMED MODE' }}</div>
+      </div>
+
+      <div class="timer-bar">
+        <div class="timer-bar-fill" [style.width.%]="(searchTime / 60) * 100"></div>
+        <span class="timer-label">{{ searchTime }}s</span>
+      </div>
+
+      <div class="search-avatars">
+        <div class="avatar-pill you">
+          <div class="avatar-letter">X</div>
+          <div class="avatar-name">You</div>
+        </div>
+        <div class="vs-divider">VS</div>
+        <div class="avatar-pill opponent searching">
+          <div class="searching-dots">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+          </div>
+          <div class="avatar-name">Searching...</div>
+        </div>
+      </div>
+
+      <button class="search-cancel-btn" (click)="cancelSearch()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 6 6 18M6 6l12 12"/>
+        </svg>
+        Cancel Search
+      </button>
+    </div>
+
+    <!-- Error State -->
+    <div class="not-found-content" *ngIf="error && !searching">
+      <div class="not-found-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="m15 9-6 6M9 9l6 6"></path>
+        </svg>
+      </div>
+      <h2 class="not-found-title">Search Failed</h2>
+      <p class="search-subtitle">{{ error }}</p>
+      <div class="notfound-actions">
+        <button class="search-retry-btn" (click)="tryAgain()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+            <path d="M21 3v5h-5"></path>
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+            <path d="M8 16H3v5"></path>
+          </svg>
+          Try Again
+        </button>
+        <button class="search-close-btn" (click)="cancelSearch()">Back to Lobby</button>
+      </div>
+    </div>
+
+  </div>
+</div>
