@@ -266,3 +266,4 @@ Update `frontend/src/index.html` — replace `%%NAKAMA_BACKEND_URL%%` with your 
 ```
 
 
+Deployed URL:https://tictactoe-frontend-o4ul.onrender.com/
